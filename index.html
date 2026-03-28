@@ -1,87 +1,1022 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Geoffrey West | Cybersecurity Specialist</title>
-  <!-- Preload local fonts -->
-  <link rel="preload" href="fonts/Disket Mono.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="fonts/Norwester.woff2" as="font" type="font/woff2" crossorigin>
-  <!-- Fallback webfonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <!-- Correct relative path to CSS -->
-  <link rel="stylesheet" href="css/gwjw-brand.css">
+  <title>Geoffrey West — Cybersecurity Specialist</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:         #080d10;
+      --surface:    #0d1519;
+      --surface2:   #111c21;
+      --border:     rgba(100,180,160,0.12);
+      --border-bright: rgba(100,180,160,0.28);
+      --text:       #c8d8d0;
+      --muted:      #4a6560;
+      --green:      #48c9a0;
+      --green-dim:  #2a7a60;
+      --amber:      #c8a050;
+      --amber-dim:  #7a5f28;
+      --blue-gray:  #3a6070;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Syne', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ─────────────────────────────────────────
+       NAUTICAL CHART BACKGROUND
+    ───────────────────────────────────────── */
+    .chart-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    /* Depth contour lines — concentric at different scales */
+    .chart-bg svg {
+      position: absolute;
+      inset: 0;
+      width: 100%; height: 100%;
+    }
+
+    /* ─────────────────────────────────────────
+       RADAR CANVAS (hero only)
+    ───────────────────────────────────────── */
+    #radar-canvas {
+      position: absolute;
+      top: 50%; right: 6%;
+      transform: translateY(-50%);
+      width: min(420px, 45vw);
+      height: min(420px, 45vw);
+      opacity: 0.55;
+      z-index: 1;
+    }
+
+    @media (max-width: 800px) { #radar-canvas { display: none; } }
+
+    /* ─────────────────────────────────────────
+       NAV
+    ───────────────────────────────────────── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 48px;
+      background: rgba(8,13,16,0.85);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--amber);
+      letter-spacing: 0.08em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* compass rose mini icon */
+    .nav-logo::before {
+      content: '✦';
+      color: var(--green);
+      font-size: 0.9rem;
+    }
+
+    .nav-links { display: flex; gap: 32px; list-style: none; }
+
+    .nav-links a {
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover { color: var(--green); }
+
+    /* ─────────────────────────────────────────
+       HERO
+    ───────────────────────────────────────── */
+    .hero {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 120px 48px 80px;
+      overflow: hidden;
+    }
+
+    /* vignette toward right where radar lives */
+    .hero::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 55% 80% at 20% 50%, transparent 0%, rgba(8,13,16,0.7) 100%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .hero-inner {
+      position: relative;
+      z-index: 2;
+      max-width: 580px;
+    }
+
+    .hero-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--amber);
+      border: 1px solid var(--amber-dim);
+      border-radius: 3px;
+      padding: 5px 14px;
+      margin-bottom: 28px;
+      letter-spacing: 0.08em;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    .ping-dot {
+      width: 6px; height: 6px;
+      background: var(--amber);
+      border-radius: 50%;
+      animation: ping 1.8s ease-out infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes ping {
+      0%   { box-shadow: 0 0 0 0 rgba(200,160,80,0.7); }
+      70%  { box-shadow: 0 0 0 8px rgba(200,160,80,0); }
+      100% { box-shadow: 0 0 0 0 rgba(200,160,80,0); }
+    }
+
+    h1 {
+      font-size: clamp(3rem, 7.5vw, 6rem);
+      font-weight: 800;
+      line-height: 0.95;
+      letter-spacing: -0.03em;
+      color: #d8ede8;
+      animation: fadeUp 0.6s ease 0.1s both;
+    }
+
+    h1 .surname {
+      display: block;
+      color: var(--muted);
+      font-weight: 400;
+    }
+
+    h1 .mark { color: var(--green); }
+
+    .hero-subtitle {
+      margin-top: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.88rem;
+      font-weight: 300;
+      color: var(--muted);
+      line-height: 2;
+      animation: fadeUp 0.6s ease 0.2s both;
+    }
+
+    .hero-subtitle .hi { color: var(--text); font-weight: 400; }
+
+    .hero-ctas {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 36px;
+      animation: fadeUp 0.6s ease 0.3s both;
+    }
+
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--green);
+      color: var(--bg);
+      font-family: 'Syne', sans-serif;
+      font-size: 0.82rem; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 12px 26px; border-radius: 4px;
+      text-decoration: none;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+
+    .btn-primary:hover { opacity: 0.85; transform: translateY(-2px); }
+
+    .btn-outline {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: transparent;
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      font-size: 0.82rem; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 12px 26px;
+      border: 1px solid var(--border-bright);
+      border-radius: 4px;
+      text-decoration: none;
+      transition: border-color 0.2s, color 0.2s, transform 0.2s;
+    }
+
+    .btn-outline:hover { border-color: var(--green); color: var(--green); transform: translateY(-2px); }
+
+    .hero-stats {
+      display: flex; gap: 40px; flex-wrap: wrap;
+      margin-top: 56px;
+      padding-top: 36px;
+      border-top: 1px solid var(--border);
+      animation: fadeUp 0.6s ease 0.4s both;
+    }
+
+    .stat-num {
+      font-size: 2.2rem; font-weight: 800;
+      color: #d8ede8; line-height: 1;
+    }
+
+    .stat-label {
+      font-size: 0.72rem; color: var(--muted);
+      margin-top: 4px; letter-spacing: 0.04em;
+    }
+
+    /* ─────────────────────────────────────────
+       DIVIDER — chart depth line style
+    ───────────────────────────────────────── */
+    .chart-divider {
+      position: relative;
+      z-index: 1;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 48px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .chart-divider::before, .chart-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--border-bright), transparent);
+    }
+
+    .chart-divider-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      color: var(--amber);
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    /* ─────────────────────────────────────────
+       SECTIONS
+    ───────────────────────────────────────── */
+    section {
+      position: relative;
+      z-index: 1;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 72px 48px;
+    }
+
+    @media (max-width: 680px) {
+      nav { padding: 14px 20px; }
+      .nav-links { gap: 16px; }
+      .hero { padding: 100px 20px 60px; }
+      section { padding: 56px 20px; }
+      .chart-divider { padding: 0 20px; }
+    }
+
+    .section-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.66rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: 36px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* small compass tick */
+    .section-label::before {
+      content: '';
+      display: inline-block;
+      width: 20px; height: 1px;
+      background: var(--amber-dim);
+    }
+
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(to right, var(--border-bright), transparent);
+    }
+
+    /* ─────────────────────────────────────────
+       ABOUT
+    ───────────────────────────────────────── */
+    .about-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      align-items: start;
+    }
+
+    @media (max-width: 680px) { .about-grid { grid-template-columns: 1fr; } }
+
+    .about-text { font-size: 1rem; line-height: 1.85; color: var(--text); font-weight: 400; }
+    .about-text p + p { margin-top: 16px; }
+    .about-text strong { color: var(--green); font-weight: 600; }
+
+    /* cert cards with chart-depth styling */
+    .cert-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+
+    .cert-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 2px solid var(--green-dim);
+      border-radius: 6px;
+      padding: 13px 16px;
+      font-size: 0.85rem;
+      transition: border-color 0.2s, border-left-color 0.2s, transform 0.2s;
+    }
+
+    .cert-item:hover {
+      border-color: var(--border-bright);
+      border-left-color: var(--green);
+      transform: translateX(3px);
+    }
+
+    .cert-icon {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.62rem; font-weight: 500;
+      width: 34px; height: 34px;
+      background: rgba(72,201,160,0.07);
+      border: 1px solid var(--green-dim);
+      border-radius: 4px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--green); flex-shrink: 0; letter-spacing: 0;
+      text-align: center; line-height: 1.2;
+    }
+
+    .cert-name { font-weight: 600; color: var(--text); font-size: 0.84rem; line-height: 1.3; }
+    .cert-meta { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+
+    .cert-badge {
+      margin-left: auto; flex-shrink: 0;
+      font-size: 0.62rem;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 3px 9px; border-radius: 20px;
+      letter-spacing: 0.06em;
+    }
+
+    .badge-done { background: rgba(72,201,160,0.1); color: var(--green); border: 1px solid var(--green-dim); }
+    .badge-wip  { background: rgba(200,160,80,0.1);  color: var(--amber); border: 1px solid var(--amber-dim); }
+    .badge-next { background: rgba(255,255,255,0.04); color: var(--muted); border: 1px solid var(--border); }
+
+    /* ─────────────────────────────────────────
+       SKILLS — sonar ring layout header
+    ───────────────────────────────────────── */
+    .skills-cols {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    @media (max-width: 680px) { .skills-cols { grid-template-columns: 1fr 1fr; } }
+
+    .skill-group {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    /* depth-shading top corner */
+    .skill-group::before {
+      content: '';
+      position: absolute;
+      top: 0; right: 0;
+      width: 60px; height: 60px;
+      background: radial-gradient(ellipse at top right, rgba(72,201,160,0.06), transparent 70%);
+    }
+
+    .skill-group:hover { border-color: var(--border-bright); transform: translateY(-2px); }
+
+    .skill-group-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase;
+      color: var(--amber); margin-bottom: 12px;
+    }
+
+    .skill-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+
+    .skill-tag {
+      font-size: 0.76rem; color: var(--muted);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 3px 9px; font-weight: 400;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    .skill-group:hover .skill-tag { color: var(--text); border-color: var(--border-bright); }
+
+    /* ─────────────────────────────────────────
+       EXPERIENCE — nautical timeline
+    ───────────────────────────────────────── */
+    .timeline { position: relative; padding-left: 32px; }
+
+    /* the vertical track */
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 4px; top: 10px; bottom: 0;
+      width: 1px;
+      background: linear-gradient(to bottom, var(--green-dim), transparent 90%);
+    }
+
+    .t-item { position: relative; padding-bottom: 48px; }
+    .t-item:last-child { padding-bottom: 0; }
+
+    /* compass-tick dot */
+    .t-dot {
+      position: absolute;
+      left: -28px; top: 8px;
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--bg);
+      border: 2px solid var(--green);
+      box-shadow: 0 0 8px rgba(72,201,160,0.4);
+    }
+
+    .t-header { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; }
+
+    .t-role { font-size: 1.1rem; font-weight: 700; color: #d8ede8; }
+
+    .t-date {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem; color: var(--amber);
+      border: 1px solid var(--amber-dim);
+      border-radius: 3px; padding: 2px 9px;
+    }
+
+    .t-org { font-size: 0.82rem; color: var(--green); font-weight: 600; margin: 4px 0 10px; letter-spacing: 0.04em; }
+
+    .t-desc { font-size: 0.88rem; color: var(--muted); line-height: 1.75; }
+
+    /* ─────────────────────────────────────────
+       CONTACT
+    ───────────────────────────────────────── */
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 680px) { .contact-grid { grid-template-columns: 1fr; } }
+
+    .contact-card {
+      display: flex; align-items: center; gap: 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 18px 22px;
+      text-decoration: none;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .contact-card:hover { border-color: var(--green); transform: translateY(-2px); }
+
+    .contact-icon {
+      width: 38px; height: 38px;
+      background: rgba(72,201,160,0.07);
+      border: 1px solid var(--green-dim);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; flex-shrink: 0;
+    }
+
+    .contact-label { font-size: 0.67rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+    .contact-value { font-size: 0.88rem; font-weight: 600; color: var(--text); margin-top: 2px; }
+
+    /* ─────────────────────────────────────────
+       FOOTER
+    ───────────────────────────────────────── */
+    footer {
+      position: relative; z-index: 1;
+      text-align: center;
+      padding: 28px 24px;
+      border-top: 1px solid var(--border);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+    }
+
+    /* ─────────────────────────────────────────
+       ANIMATIONS
+    ───────────────────────────────────────── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .reveal {
+      opacity: 0; transform: translateY(18px);
+      transition: opacity 0.65s ease, transform 0.65s ease;
+    }
+
+    .reveal.visible { opacity: 1; transform: none; }
+  </style>
 </head>
 <body>
-  <header>
-    <h1>Geoffrey West</h1>
-    <p class="subtitle">Veteran. Certified. Ready for Cyber.</p>
-    <p class="location">Brisbane, QLD · <a href="mailto:cyber@thegwjw.com">cyber@thegwjw.com</a></p>
-    <nav class="site-nav">
-      <ul>
-        <li><a href="#about">About</a></li>
-        <li><a href="#skills">Skills</a></li>
-        <li><a href="#projects">Projects</a></li>
-        <li><a href="#contact">Contact</a></li>
-      </ul>
-    </nav>
-  </header>
 
-  <main>
-    <section id="about">
-      <h2>About Me</h2>
-      <p>
-        I'm a Royal Canadian Navy veteran turned cybersecurity specialist, now based in Brisbane.
-        After two decades in secure HR and administrative roles, I have transitioned into IT with a focus on
-        incident response, compliance, and systems hardening. I bring a steady hand, sharp eye, and mission-first
-        mindset to every team I join.
-      </p>
-    </section>
+<!-- ── NAUTICAL CHART BACKGROUND ── -->
+<div class="chart-bg">
+  <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <!-- depth gradient -->
+      <radialGradient id="depthGrad" cx="30%" cy="60%" r="70%">
+        <stop offset="0%"   stop-color="#0d2a22" stop-opacity="0.5"/>
+        <stop offset="100%" stop-color="#080d10" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
 
-    <section id="skills">
-      <h2>What I Bring</h2>
-      <ul>
-        <li>Cyber Security Diploma Program Graduate (Lighthouse Labs)</li>
-        <li>SIEM (Splunk), incident response, playbooks, digital forensics</li>
-        <li>GRC Frameworks: ISO 27001, NIST CSF, ASD Essential Eight</li>
-        <li>Security Compliance Assessments</li>
-        <li>Linux/Windows administrative tasks</li>
-        <li>Scripting in Bash, Python, PowerShell</li>
-        <li>Ten Years Experience in Small Team Leadership</li>
-      </ul>
-    </section>
+    <!-- deep water wash -->
+    <rect width="1440" height="900" fill="url(#depthGrad)"/>
 
-    <section>
-      <h2>Certifications & Learning</h2>
-      <ul>
-        <li>Diploma in Cyber Security – <a href="https://www.lighthouselabs.ca/en/cyber-security-course" target="_blank">Lighthouse Labs</a> 
-          (<a href="/docs/Geoffrey_West_Lighthouse_Diploma.pdf" target="_blank">View Diploma</a> | 
-          <a href="/docs/Lighthouse_Cyber_Security_Syllabus.pdf" target="_blank">Course Syllabus</a>)
-        </li>
-        <li>AWS Certified Cloud Practitioner (in progress)</li>
-        <li>PJPT – Practical Junior Penetration Tester (next up)</li>
-        <li>OSCP – Offensive Security Certified Professional (next goal)</li>
-      </ul>
-    </section>
+    <!-- contour rings — simulate bathymetric chart -->
+    <g fill="none" stroke="rgba(72,201,160,0.07)" stroke-width="1">
+      <ellipse cx="220" cy="700" rx="180" ry="120"/>
+      <ellipse cx="220" cy="700" rx="280" ry="190"/>
+      <ellipse cx="220" cy="700" rx="380" ry="260"/>
+      <ellipse cx="220" cy="700" rx="500" ry="340"/>
+      <ellipse cx="220" cy="700" rx="640" ry="440"/>
 
-    <section id="projects">
-      <h2>Coming Soon</h2>
-      <p>
-        This site will soon host selected project write-ups and technical walkthroughs.
-      </p>
-    </section>
+      <ellipse cx="1100" cy="200" rx="200" ry="140"/>
+      <ellipse cx="1100" cy="200" rx="320" ry="220"/>
+      <ellipse cx="1100" cy="200" rx="460" ry="310"/>
+    </g>
 
-    <section id="contact">
-      <h2>Contact</h2>
-      <p>Email: <a href="mailto:cyber@thegwjw.com">cyber@thegwjw.com</a></p>
-      <p>Location: Brisbane, QLD</p>
-      <a href="https://www.linkedin.com/in/geoffrey-west-b5824991" class="button" target="_blank">View LinkedIn</a>
-    </section>
-  </main>
+    <!-- chart grid lines — sparse, like a nautical chart graticule -->
+    <g stroke="rgba(72,201,160,0.055)" stroke-width="0.7">
+      <!-- horizontal parallels -->
+      <line x1="0" y1="150" x2="1440" y2="150"/>
+      <line x1="0" y1="300" x2="1440" y2="300"/>
+      <line x1="0" y1="450" x2="1440" y2="450"/>
+      <line x1="0" y1="600" x2="1440" y2="600"/>
+      <line x1="0" y1="750" x2="1440" y2="750"/>
+      <!-- vertical meridians -->
+      <line x1="180"  y1="0" x2="180"  y2="900"/>
+      <line x1="360"  y1="0" x2="360"  y2="900"/>
+      <line x1="540"  y1="0" x2="540"  y2="900"/>
+      <line x1="720"  y1="0" x2="720"  y2="900"/>
+      <line x1="900"  y1="0" x2="900"  y2="900"/>
+      <line x1="1080" y1="0" x2="1080" y2="900"/>
+      <line x1="1260" y1="0" x2="1260" y2="900"/>
+    </g>
 
-  <footer>
-    <p>© 2025 Geoffrey West</p>
-  </footer>
+    <!-- tick marks along edges — like a chart border -->
+    <g stroke="rgba(200,160,80,0.2)" stroke-width="1">
+      <!-- top ticks -->
+      <line x1="180"  y1="0" x2="180"  y2="12"/>
+      <line x1="360"  y1="0" x2="360"  y2="12"/>
+      <line x1="540"  y1="0" x2="540"  y2="12"/>
+      <line x1="720"  y1="0" x2="720"  y2="12"/>
+      <line x1="900"  y1="0" x2="900"  y2="12"/>
+      <line x1="1080" y1="0" x2="1080" y2="12"/>
+      <line x1="1260" y1="0" x2="1260" y2="12"/>
+      <!-- left ticks -->
+      <line x1="0" y1="150" x2="12" y2="150"/>
+      <line x1="0" y1="300" x2="12" y2="300"/>
+      <line x1="0" y1="450" x2="12" y2="450"/>
+      <line x1="0" y1="600" x2="12" y2="600"/>
+      <line x1="0" y1="750" x2="12" y2="750"/>
+    </g>
+
+    <!-- compass rose (bottom right) -->
+    <g transform="translate(1340, 800)" stroke="rgba(200,160,80,0.3)" fill="none">
+      <circle cx="0" cy="0" r="44" stroke-width="0.8"/>
+      <circle cx="0" cy="0" r="30" stroke-width="0.5"/>
+      <circle cx="0" cy="0" r="16" stroke-width="0.5"/>
+      <!-- cardinal ticks -->
+      <line x1="0" y1="-44" x2="0" y2="-34" stroke-width="1.5"/>
+      <line x1="0" y1="34"  x2="0" y2="44"  stroke-width="1"/>
+      <line x1="-44" y1="0" x2="-34" y2="0" stroke-width="1"/>
+      <line x1="34"  y1="0" x2="44"  y2="0" stroke-width="1"/>
+      <!-- intercardinal ticks -->
+      <line x1="31"  y1="-31" x2="24" y2="-24" stroke-width="0.7"/>
+      <line x1="-31" y1="-31" x2="-24" y2="-24" stroke-width="0.7"/>
+      <line x1="31"  y1="31"  x2="24" y2="24"  stroke-width="0.7"/>
+      <line x1="-31" y1="31"  x2="-24" y2="24"  stroke-width="0.7"/>
+      <!-- north pointer -->
+      <polygon points="0,-44 -5,-20 0,-28 5,-20" fill="rgba(200,160,80,0.5)" stroke="none"/>
+    </g>
+
+    <!-- depth annotation labels (faint) -->
+    <g font-family="'JetBrains Mono', monospace" font-size="9" fill="rgba(72,201,160,0.18)" letter-spacing="0.05em">
+      <text x="100" y="680">—10m</text>
+      <text x="60"  y="740">—20m</text>
+      <text x="20"  y="800">—30m</text>
+      <text x="1050" y="170">—5m</text>
+      <text x="1020" y="230">—15m</text>
+    </g>
+  </svg>
+</div>
+
+<!-- ── NAV ── -->
+<nav>
+  <div class="nav-logo">GWJW · 27°28'S 153°01'E</div>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#skills">Skills</a></li>
+    <li><a href="#experience">Experience</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- ── HERO ── -->
+<div class="hero">
+  <!-- Radar -->
+  <canvas id="radar-canvas"></canvas>
+
+  <div class="hero-inner">
+    <div class="hero-tag">
+      <span class="ping-dot"></span>
+      Available for opportunities · Brisbane, QLD
+    </div>
+    <h1>
+      Geoffrey
+      <span class="surname">West<span class="mark">.</span></span>
+    </h1>
+    <p class="hero-subtitle">
+      <span class="hi">Cybersecurity Specialist</span><br>
+      RCN Veteran &nbsp;·&nbsp; Incident Response<br>
+      GRC &nbsp;·&nbsp; Systems Hardening
+    </p>
+    <div class="hero-ctas">
+      <a class="btn-primary" href="#contact">Get in touch</a>
+      <a class="btn-outline" href="https://www.linkedin.com/in/geoffrey-west-b5824991" target="_blank">LinkedIn</a>
+    </div>
+    <div class="hero-stats">
+      <div>
+        <div class="stat-num">20+</div>
+        <div class="stat-label">Years in service</div>
+      </div>
+      <div>
+        <div class="stat-num">4</div>
+        <div class="stat-label">Certs earned &amp; in progress</div>
+      </div>
+      <div>
+        <div class="stat-num">0</div>
+        <div class="stat-label">Missions abandoned</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── ABOUT ── -->
+<div class="chart-divider"><span class="chart-divider-label">About</span></div>
+
+<section id="about">
+  <div class="section-label reveal">Bio</div>
+  <div class="about-grid">
+    <div class="about-text reveal">
+      <p>I'm a <strong>Royal Canadian Navy veteran</strong> turned cybersecurity specialist, now based in Brisbane. After two decades in secure HR and administrative roles, I've transitioned into IT with a focus on <strong>incident response, compliance, and systems hardening</strong>.</p>
+      <p>I bring a steady hand, a sharp eye, and a mission-first mindset to every team I join. My background gives me something most cyber pros don't have: the ability to stay calm when things go sideways.</p>
+      <p>Currently working toward <strong>PJPT</strong> and <strong>OSCP</strong> as I build out my offensive security toolkit.</p>
+    </div>
+    <ul class="cert-list reveal">
+      <li class="cert-item">
+        <div class="cert-icon">LH</div>
+        <div>
+          <div class="cert-name">Diploma in Cyber Security</div>
+          <div class="cert-meta">Lighthouse Labs</div>
+        </div>
+        <span class="cert-badge badge-done">Earned</span>
+      </li>
+      <li class="cert-item">
+        <div class="cert-icon">AWS</div>
+        <div>
+          <div class="cert-name">AWS Certified Cloud Practitioner</div>
+          <div class="cert-meta">Amazon Web Services</div>
+        </div>
+        <span class="cert-badge badge-wip">In Progress</span>
+      </li>
+      <li class="cert-item">
+        <div class="cert-icon">PJP<br>T</div>
+        <div>
+          <div class="cert-name">PJPT — Practical Junior Penetration Tester</div>
+          <div class="cert-meta">TCM Security</div>
+        </div>
+        <span class="cert-badge badge-next">Next Up</span>
+      </li>
+      <li class="cert-item">
+        <div class="cert-icon">OSC<br>P</div>
+        <div>
+          <div class="cert-name">OSCP — Offensive Security Certified Professional</div>
+          <div class="cert-meta">Offensive Security</div>
+        </div>
+        <span class="cert-badge badge-next">Goal</span>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<!-- ── SKILLS ── -->
+<div class="chart-divider"><span class="chart-divider-label">Capabilities</span></div>
+
+<section id="skills">
+  <div class="section-label reveal">What I Bring</div>
+  <div class="skills-cols">
+    <div class="skill-group reveal">
+      <div class="skill-group-title">Detection &amp; Response</div>
+      <div class="skill-tags">
+        <span class="skill-tag">Splunk (SIEM)</span>
+        <span class="skill-tag">Incident Response</span>
+        <span class="skill-tag">Playbooks</span>
+        <span class="skill-tag">Digital Forensics</span>
+      </div>
+    </div>
+    <div class="skill-group reveal">
+      <div class="skill-group-title">GRC &amp; Compliance</div>
+      <div class="skill-tags">
+        <span class="skill-tag">ISO 27001</span>
+        <span class="skill-tag">NIST CSF</span>
+        <span class="skill-tag">ASD Essential Eight</span>
+        <span class="skill-tag">Security Assessments</span>
+      </div>
+    </div>
+    <div class="skill-group reveal">
+      <div class="skill-group-title">Scripting &amp; Systems</div>
+      <div class="skill-tags">
+        <span class="skill-tag">Bash</span>
+        <span class="skill-tag">Python</span>
+        <span class="skill-tag">PowerShell</span>
+        <span class="skill-tag">Linux Admin</span>
+        <span class="skill-tag">Windows Admin</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── EXPERIENCE ── -->
+<div class="chart-divider"><span class="chart-divider-label">Service Record</span></div>
+
+<section id="experience">
+  <div class="section-label reveal">Experience</div>
+  <div class="timeline">
+    <div class="t-item reveal">
+      <div class="t-dot"></div>
+      <div class="t-header">
+        <div class="t-role">Cybersecurity Specialist</div>
+        <div class="t-date">2023 — Present</div>
+      </div>
+      <div class="t-org">Independent / Lighthouse Labs Graduate</div>
+      <div class="t-desc">Applying incident response, SIEM tooling, and GRC frameworks to real-world scenarios. Building hands-on offensive security skills through lab environments and CTF challenges while pursuing PJPT and OSCP certifications.</div>
+    </div>
+    <div class="t-item reveal">
+      <div class="t-dot"></div>
+      <div class="t-header">
+        <div class="t-role">Senior Administrative &amp; HR Specialist</div>
+        <div class="t-date">~2003 — 2023</div>
+      </div>
+      <div class="t-org">Royal Canadian Navy</div>
+      <div class="t-desc">Two decades of service in secure HR and administrative functions within a high-stakes operational environment. Led small teams, managed sensitive information under pressure, and maintained operational readiness — skills that translate directly to security operations and incident command.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CONTACT ── -->
+<div class="chart-divider"><span class="chart-divider-label">Contact</span></div>
+
+<section id="contact">
+  <div class="section-label reveal">Make Contact</div>
+  <div class="contact-grid">
+    <a class="contact-card reveal" href="mailto:cyber@thegwjw.com">
+      <div class="contact-icon">📧</div>
+      <div>
+        <div class="contact-label">Email</div>
+        <div class="contact-value">cyber@thegwjw.com</div>
+      </div>
+    </a>
+    <a class="contact-card reveal" href="https://www.linkedin.com/in/geoffrey-west-b5824991" target="_blank">
+      <div class="contact-icon">💼</div>
+      <div>
+        <div class="contact-label">LinkedIn</div>
+        <div class="contact-value">geoffrey-west-b5824991</div>
+      </div>
+    </a>
+    <a class="contact-card reveal" href="#">
+      <div class="contact-icon">📍</div>
+      <div>
+        <div class="contact-label">Location</div>
+        <div class="contact-value">Brisbane, QLD, Australia</div>
+      </div>
+    </a>
+    <a class="contact-card reveal" href="https://thegwjw.com/docs/Geoffrey_West_Lighthouse_Diploma.pdf" target="_blank">
+      <div class="contact-icon">📄</div>
+      <div>
+        <div class="contact-label">Diploma</div>
+        <div class="contact-value">View Lighthouse Labs Certificate</div>
+      </div>
+    </a>
+  </div>
+</section>
+
+<footer>
+  ✦ &nbsp; GEOFFREY WEST &nbsp; · &nbsp; BRISBANE, QLD &nbsp; · &nbsp; 27°28'S 153°01'E &nbsp; · &nbsp; © 2025
+</footer>
+
+<!-- ── RADAR ANIMATION ── -->
+<script>
+(function () {
+  const canvas = document.getElementById('radar-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  const LOGICAL = 420; // fixed logical size in CSS px
+
+  function resize() {
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width  = LOGICAL * dpr;
+    canvas.height = LOGICAL * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // reset then scale — avoids compounding
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+
+  const GREEN = '#48c9a0';
+  const AMBER = '#c8a050';
+
+  // Simulated blips — fixed polar coords [angle_deg, radius_fraction]
+  const blips = [
+    { a: 42,  r: 0.55, v: 0 },
+    { a: 118, r: 0.31, v: 0 },
+    { a: 200, r: 0.68, v: 0 },
+    { a: 275, r: 0.44, v: 0 },
+    { a: 330, r: 0.72, v: 0 },
+    { a: 80,  r: 0.82, v: 0 },
+  ];
+
+  let sweep = 0; // degrees
+
+  function draw() {
+    const S = LOGICAL;
+    const cx = S / 2, cy = S / 2, R = S * 0.46;
+
+    ctx.clearRect(0, 0, LOGICAL, LOGICAL);
+
+    // ── background circle ──
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(8,20,16,0.85)';
+    ctx.fill();
+
+    // ── range rings ──
+    [0.25, 0.5, 0.75, 1].forEach((f, i) => {
+      ctx.beginPath();
+      ctx.arc(cx, cy, R * f, 0, Math.PI * 2);
+      ctx.strokeStyle = i === 3 ? 'rgba(72,201,160,0.25)' : 'rgba(72,201,160,0.12)';
+      ctx.lineWidth = i === 3 ? 1.2 : 0.7;
+      ctx.stroke();
+    });
+
+    // ── crosshairs ──
+    ctx.strokeStyle = 'rgba(72,201,160,0.12)';
+    ctx.lineWidth = 0.7;
+    [-1, 0, 1].forEach(d => {
+      if (d === 0) {
+        ctx.beginPath(); ctx.moveTo(cx - R, cy); ctx.lineTo(cx + R, cy); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx, cy - R); ctx.lineTo(cx, cy + R); ctx.stroke();
+      }
+    });
+
+    // ── sweep gradient ──
+    const sweepRad = (sweep - 90) * Math.PI / 180;
+    const grad = ctx.createConicalGradient
+      ? null  // not standard; use manual arc fill
+      : null;
+
+    // Draw sweep arc manually: a wedge of ~90°
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, R - 1, sweepRad - Math.PI * 0.5, sweepRad, false);
+    ctx.closePath();
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, R);
+    g.addColorStop(0,   'rgba(72,201,160,0.0)');
+    g.addColorStop(0.6, 'rgba(72,201,160,0.07)');
+    g.addColorStop(1,   'rgba(72,201,160,0.18)');
+    ctx.fillStyle = g;
+    ctx.fill();
+    ctx.restore();
+
+    // ── sweep line ──
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + Math.cos(sweepRad) * R, cy + Math.sin(sweepRad) * R);
+    ctx.strokeStyle = 'rgba(72,201,160,0.9)';
+    ctx.lineWidth = 1.5;
+    ctx.shadowColor = GREEN;
+    ctx.shadowBlur = 6;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // ── blips ──
+    blips.forEach(b => {
+      const bRad = (b.a - 90) * Math.PI / 180;
+      const bx = cx + Math.cos(bRad) * R * b.r;
+      const by = cy + Math.sin(bRad) * R * b.r;
+
+      // light up as sweep passes
+      const diff = ((sweep - b.a) % 360 + 360) % 360;
+      if (diff < 8) b.v = 1;
+      b.v *= 0.975; // decay
+
+      if (b.v > 0.02) {
+        ctx.beginPath();
+        ctx.arc(bx, by, 3, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(72,201,160,${b.v})`;
+        ctx.shadowColor = GREEN;
+        ctx.shadowBlur = 10 * b.v;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+    });
+
+    // ── centre dot ──
+    ctx.beginPath();
+    ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+    ctx.fillStyle = GREEN;
+    ctx.shadowColor = GREEN;
+    ctx.shadowBlur = 8;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // ── border ──
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(72,201,160,0.3)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // ── heading label (N) ──
+    ctx.font = "600 10px 'JetBrains Mono', monospace";
+    ctx.fillStyle = 'rgba(200,160,80,0.7)';
+    ctx.textAlign = 'center';
+    ctx.fillText('N', cx, cy - R + 14);
+    ctx.fillText('S', cx, cy + R - 6);
+    ctx.fillText('E', cx + R - 8, cy + 4);
+    ctx.fillText('W', cx - R + 8, cy + 4);
+
+    sweep = (sweep + 0.8) % 360;
+    requestAnimationFrame(draw);
+  }
+
+  draw();
+})();
+
+// ── SCROLL REVEAL ──
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach((e, i) => {
+    if (e.isIntersecting) {
+      setTimeout(() => e.target.classList.add('visible'), i * 90);
+      observer.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+
 </body>
 </html>
