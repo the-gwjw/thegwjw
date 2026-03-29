@@ -747,6 +747,14 @@
         </div>
         <span class="cert-badge badge-done">Earned</span>
       </li>
+      <li class="cert-item">
+        <div class="cert-icon">CSC</div>
+        <div>
+          <div class="cert-name">Canadian Securities Course</div>
+          <div class="cert-meta">Canadian Securities Institute · 2007</div>
+        </div>
+        <span class="cert-badge badge-done">Earned</span>
+      </li>
     </ul>
   </div>
 </section>
@@ -782,13 +790,15 @@
       </div>
     </div>
     <div class="skill-group reveal">
-      <div class="skill-group-title">Currently Building</div>
+      <div class="skill-group-title">People &amp; Communication</div>
       <div class="skill-tags">
-        <span class="skill-tag">Linux (daily driver)</span>
-        <span class="skill-tag">Python (fundamentals)</span>
-        <span class="skill-tag">SIEM concepts</span>
-        <span class="skill-tag">Vulnerability Assessment</span>
-        <span class="skill-tag">AWS Cloud</span>
+        <span class="skill-tag">Plain Language Briefing</span>
+        <span class="skill-tag">Executive Communication</span>
+        <span class="skill-tag">Rapport Building</span>
+        <span class="skill-tag">Conflict Resolution</span>
+        <span class="skill-tag">Course Instruction</span>
+        <span class="skill-tag">Cross-cultural Collaboration</span>
+        <span class="skill-tag">Empathetic Case Management</span>
       </div>
     </div>
   </div>
@@ -1023,6 +1033,12 @@
 
 // ── SCROLL REVEAL ──
 const observer = new IntersectionObserver((entries) => {
-  entries.forEach((e, i) => {
+  entries.forEach((e) => {
     if (e.isIntersecting) {
-  
+      e.target.classList.add('visible');
+      observer.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script></body></html>
