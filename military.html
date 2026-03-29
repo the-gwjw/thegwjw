@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Geoffrey West — Service Record</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:         #080d10;
+      --surface:    #0d1519;
+      --surface2:   #111c21;
+      --border:     rgba(100,180,160,0.12);
+      --border-bright: rgba(100,180,160,0.28);
+      --text:       #c8d8d0;
+      --muted:      #4a6560;
+      --green:      #48c9a0;
+      --green-dim:  #2a7a60;
+      --amber:      #c8a050;
+      --amber-dim:  #7a5f28;
+      --blue-gray:  #3a6070;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Syne', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── NAUTICAL CHART BACKGROUND ── */
+    .chart-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .chart-bg svg {
+      position: absolute;
+      inset: 0;
+      width: 100%; height: 100%;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 48px;
+      background: rgba(8,13,16,0.85);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--amber);
+      letter-spacing: 0.08em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+    .nav-logo::before {
+      content: '✦';
+      color: var(--green);
+      font-size: 0.9rem;
+    }
+
+    .nav-links { display: flex; gap: 32px; list-style: none; }
+    .nav-links a {
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover, .nav-links a.active { color: var(--green); }
+
+    @media (max-width: 680px) {
+      nav { padding: 14px 20px; }
+      .nav-links { gap: 16px; }
+    }
+
+    /* ── PAGE HEADER ── */
+    .page-header {
+      position: relative;
+      z-index: 1;
+      padding: 140px 48px 72px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .page-header-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--amber);
+      border: 1px solid var(--amber-dim);
+      border-radius: 3px;
+      padding: 5px 14px;
+      margin-bottom: 28px;
+      letter-spacing: 0.08em;
+    }
+
+    .page-header h1 {
+      font-size: clamp(2.4rem, 5vw, 4rem);
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.03em;
+      color: #d8ede8;
+      margin-bottom: 20px;
+    }
+
+    .page-header h1 .mark { color: var(--green); }
+
+    .page-header p {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.88rem;
+      color: var(--muted);
+      line-height: 1.9;
+      max-width: 600px;
+    }
+
+    .service-stats {
+      display: flex;
+      gap: 40px;
+      flex-wrap: wrap;
+      margin-top: 48px;
+      padding-top: 36px;
+      border-top: 1px solid var(--border);
+    }
+
+    .stat-num {
+      font-size: 2rem; font-weight: 800;
+      color: #d8ede8; line-height: 1;
+    }
+    .stat-label {
+      font-size: 0.72rem; color: var(--muted);
+      margin-top: 4px; letter-spacing: 0.04em;
+    }
+
+    /* ── SECTIONS ── */
+    section {
+      position: relative;
+      z-index: 1;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 64px 48px;
+    }
+
+    @media (max-width: 680px) {
+      .page-header { padding: 120px 20px 56px; }
+      section { padding: 48px 20px; }
+      .chart-divider { padding: 0 20px; }
+    }
+
+    .section-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.66rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: 36px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .section-label::before {
+      content: '';
+      display: inline-block;
+      width: 20px; height: 1px;
+      background: var(--amber-dim);
+    }
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(to right, var(--border-bright), transparent);
+    }
+
+    /* ── CHART DIVIDER ── */
+    .chart-divider {
+      position: relative;
+      z-index: 1;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 48px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .chart-divider::before, .chart-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--border-bright), transparent);
+    }
+    .chart-divider-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      color: var(--amber);
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    /* ── HIGHLIGHT CARDS ── */
+    .highlight-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 48px;
+    }
+
+    @media (max-width: 680px) { .highlight-grid { grid-template-columns: 1fr; } }
+
+    .highlight-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--green);
+      border-radius: 8px;
+      padding: 24px;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .highlight-card:hover {
+      border-color: var(--border-bright);
+      border-left-color: var(--green);
+      transform: translateY(-2px);
+    }
+    .highlight-card-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: 10px;
+    }
+    .highlight-card h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #d8ede8;
+      margin-bottom: 8px;
+    }
+    .highlight-card p {
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.75;
+    }
+
+    /* ── TIMELINE ── */
+    .timeline { position: relative; padding-left: 32px; }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 4px; top: 10px; bottom: 0;
+      width: 1px;
+      background: linear-gradient(to bottom, var(--green-dim), transparent 90%);
+    }
+
+    .t-item { position: relative; padding-bottom: 40px; }
+    .t-item:last-child { padding-bottom: 0; }
+
+    .t-dot {
+      position: absolute;
+      left: -28px; top: 8px;
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--bg);
+      border: 2px solid var(--green);
+      box-shadow: 0 0 8px rgba(72,201,160,0.4);
+    }
+
+    .t-dot.amber {
+      border-color: var(--amber);
+      box-shadow: 0 0 8px rgba(200,160,80,0.4);
+    }
+
+    .t-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .t-role { font-size: 1rem; font-weight: 700; color: #d8ede8; }
+
+    .t-date {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem; color: var(--amber);
+      border: 1px solid var(--amber-dim);
+      border-radius: 3px; padding: 2px 9px;
+      white-space: nowrap;
+    }
+
+    .t-org { font-size: 0.82rem; color: var(--green); font-weight: 600; margin: 4px 0 8px; letter-spacing: 0.04em; }
+    .t-desc { font-size: 0.86rem; color: var(--muted); line-height: 1.75; }
+    .t-location {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--blue-gray);
+      margin-top: 4px;
+    }
+
+    /* ── AWARDS ── */
+    .awards-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    @media (max-width: 680px) { .awards-grid { grid-template-columns: 1fr 1fr; } }
+
+    .award-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .award-card:hover { border-color: var(--border-bright); transform: translateY(-2px); }
+
+    .award-icon {
+      font-size: 1.6rem;
+      margin-bottom: 10px;
+    }
+    .award-name {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #d8ede8;
+      margin-bottom: 4px;
+    }
+    .award-meta {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* ── GRC BRIDGE ── */
+    .grc-bridge {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 32px;
+    }
+    .grc-bridge h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #d8ede8;
+      margin-bottom: 16px;
+    }
+    .grc-bridge p {
+      font-size: 0.88rem;
+      color: var(--muted);
+      line-height: 1.8;
+      margin-bottom: 14px;
+    }
+    .grc-bridge p:last-child { margin-bottom: 0; }
+    .grc-bridge strong { color: var(--green); font-weight: 600; }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .reveal {
+      opacity: 0; transform: translateY(18px);
+      transition: opacity 0.65s ease, transform 0.65s ease;
+    }
+    .reveal.visible { opacity: 1; transform: none; }
+
+    /* ── FOOTER ── */
+    footer {
+      position: relative; z-index: 1;
+      text-align: center;
+      padding: 28px 24px;
+      border-top: 1px solid var(--border);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── BACKGROUND ── -->
+<div class="chart-bg">
+  <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <radialGradient id="depthGrad" cx="30%" cy="60%" r="70%">
+        <stop offset="0%"   stop-color="#0d2a22" stop-opacity="0.5"/>
+        <stop offset="100%" stop-color="#080d10" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <rect width="1440" height="900" fill="url(#depthGrad)"/>
+    <g fill="none" stroke="rgba(72,201,160,0.07)" stroke-width="1">
+      <ellipse cx="220" cy="700" rx="180" ry="120"/>
+      <ellipse cx="220" cy="700" rx="280" ry="190"/>
+      <ellipse cx="220" cy="700" rx="380" ry="260"/>
+      <ellipse cx="220" cy="700" rx="500" ry="340"/>
+      <ellipse cx="1100" cy="200" rx="200" ry="140"/>
+      <ellipse cx="1100" cy="200" rx="320" ry="220"/>
+      <ellipse cx="1100" cy="200" rx="460" ry="310"/>
+    </g>
+    <g stroke="rgba(72,201,160,0.055)" stroke-width="0.7">
+      <line x1="0" y1="150" x2="1440" y2="150"/>
+      <line x1="0" y1="300" x2="1440" y2="300"/>
+      <line x1="0" y1="450" x2="1440" y2="450"/>
+      <line x1="0" y1="600" x2="1440" y2="600"/>
+      <line x1="0" y1="750" x2="1440" y2="750"/>
+      <line x1="180"  y1="0" x2="180"  y2="900"/>
+      <line x1="360"  y1="0" x2="360"  y2="900"/>
+      <line x1="540"  y1="0" x2="540"  y2="900"/>
+      <line x1="720"  y1="0" x2="720"  y2="900"/>
+      <line x1="900"  y1="0" x2="900"  y2="900"/>
+      <line x1="1080" y1="0" x2="1080" y2="900"/>
+      <line x1="1260" y1="0" x2="1260" y2="900"/>
+    </g>
+    <g stroke="rgba(200,160,80,0.2)" stroke-width="1">
+      <line x1="180"  y1="0" x2="180"  y2="12"/>
+      <line x1="360"  y1="0" x2="360"  y2="12"/>
+      <line x1="540"  y1="0" x2="540"  y2="12"/>
+      <line x1="720"  y1="0" x2="720"  y2="12"/>
+      <line x1="900"  y1="0" x2="900"  y2="12"/>
+      <line x1="1080" y1="0" x2="1080" y2="12"/>
+      <line x1="1260" y1="0" x2="1260" y2="12"/>
+      <line x1="0" y1="150" x2="12" y2="150"/>
+      <line x1="0" y1="300" x2="12" y2="300"/>
+      <line x1="0" y1="450" x2="12" y2="450"/>
+      <line x1="0" y1="600" x2="12" y2="600"/>
+      <line x1="0" y1="750" x2="12" y2="750"/>
+    </g>
+    <g transform="translate(1340, 800)" stroke="rgba(200,160,80,0.3)" fill="none">
+      <circle cx="0" cy="0" r="44" stroke-width="0.8"/>
+      <circle cx="0" cy="0" r="30" stroke-width="0.5"/>
+      <circle cx="0" cy="0" r="16" stroke-width="0.5"/>
+      <line x1="0" y1="-44" x2="0" y2="-34" stroke-width="1.5"/>
+      <line x1="0" y1="34"  x2="0" y2="44"  stroke-width="1"/>
+      <line x1="-44" y1="0" x2="-34" y2="0" stroke-width="1"/>
+      <line x1="34"  y1="0" x2="44"  y2="0" stroke-width="1"/>
+      <line x1="31"  y1="-31" x2="24" y2="-24" stroke-width="0.7"/>
+      <line x1="-31" y1="-31" x2="-24" y2="-24" stroke-width="0.7"/>
+      <line x1="31"  y1="31"  x2="24" y2="24"  stroke-width="0.7"/>
+      <line x1="-31" y1="31"  x2="-24" y2="24"  stroke-width="0.7"/>
+      <polygon points="0,-44 -5,-20 0,-28 5,-20" fill="rgba(200,160,80,0.5)" stroke="none"/>
+    </g>
+    <g font-family="'JetBrains Mono', monospace" font-size="9" fill="rgba(72,201,160,0.18)" letter-spacing="0.05em">
+      <text x="100" y="680">—10m</text>
+      <text x="60"  y="740">—20m</text>
+      <text x="20"  y="800">—30m</text>
+      <text x="1050" y="170">—5m</text>
+      <text x="1020" y="230">—15m</text>
+    </g>
+  </svg>
+</div>
+
+<!-- ── NAV ── -->
+<nav>
+  <a class="nav-logo" href="index.html">GWJW · 27°28'S 153°01'E</a>
+  <ul class="nav-links">
+    <li><a href="index.html#about">About</a></li>
+    <li><a href="index.html#skills">Skills</a></li>
+    <li><a href="index.html#experience">Experience</a></li>
+    <li><a href="military.html" class="active">Service Record</a></li>
+    <li><a href="index.html#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- ── PAGE HEADER ── -->
+<div class="page-header">
+  <div class="page-header-tag">✦ Royal Canadian Navy · 2002 – 2023</div>
+  <h1>Twenty Years<br>Under the <span class="mark">Ensign.</span></h1>
+  <p>
+    Enrolled December 2002. Retired January 2023.<br>
+    Petty Officer Second Class · HRA / RMS Clerk<br>
+    Atlantic &amp; Pacific Fleets · Two operational deployments
+  </p>
+  <div class="service-stats">
+    <div>
+      <div class="stat-num">20</div>
+      <div class="stat-label">Years of service</div>
+    </div>
+    <div>
+      <div class="stat-num">9+</div>
+      <div class="stat-label">Units &amp; ships served</div>
+    </div>
+    <div>
+      <div class="stat-num">2</div>
+      <div class="stat-label">International deployments</div>
+    </div>
+    <div>
+      <div class="stat-num">TS</div>
+      <div class="stat-label">Security clearance</div>
+    </div>
+    <div>
+      <div class="stat-num">400</div>
+      <div class="stat-label">Personnel administered</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── KEY POSTINGS ── -->
+<div class="chart-divider"><span class="chart-divider-label">Notable Postings</span></div>
+
+<section>
+  <div class="section-label reveal">Career Highlights</div>
+  <div class="highlight-grid">
+    <div class="highlight-card reveal">
+      <div class="highlight-card-title">Final Posting · Oct 2017 – May 2021</div>
+      <h3>Canadian Defence Liaison Staff Washington</h3>
+      <p>Operations NCO embedded with the Canadian military's liaison office at the US Department of Defense, Washington DC. High-trust, inter-allied environment requiring Top Secret clearance. Responsible for HR operations, records management, and administrative compliance in a classified multinational setting.</p>
+    </div>
+    <div class="highlight-card reveal">
+      <div class="highlight-card-title">Operational Deployment · Sep 2006 – Mar 2007</div>
+      <h3>HMCS Ottawa — Operation Athena</h3>
+      <p>Deployed with HMCS Ottawa to the Arabian Gulf in support of Operation Athena, Canada's contribution to the multinational coalition in the region. Provided HR and administrative support aboard an operational warship in an active theatre. Awarded the South West Asia Service Medal with Active Force bar.</p>
+    </div>
+    <div class="highlight-card reveal">
+      <div class="highlight-card-title">Operational Deployment · Feb – Jul 2013</div>
+      <h3>Task Force Artemis — Arabian Sea</h3>
+      <p>Deployed to Bahrain in support of Operation Artemis, the multinational counter-terrorism and counter-narcotics mission in the Arabian Sea. Provided HR and administrative support to the task force in an active operational environment. Awarded the Gulf and Kuwait Medal (GCS-SWA).</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── POSTING HISTORY ── -->
+<div class="chart-divider"><span class="chart-divider-label">Posting History</span></div>
+
+<section>
+  <div class="section-label reveal">Full Assignment Record</div>
+  <div class="timeline">
+
+    <div class="t-item reveal">
+      <div class="t-dot amber"></div>
+      <div class="t-header">
+        <div class="t-role">HR Clerk</div>
+        <div class="t-date">May 2021 – Jan 2023</div>
+      </div>
+      <div class="t-org">1st Battalion, Royal Newfoundland Regiment</div>
+      <div class="t-location">📍 St. John's, Newfoundland</div>
+      <div class="t-desc">Final posting of career. HR administration support to a Reserve Force infantry regiment. Maintained personnel records and compliance functions before retirement in January 2023.</div>
+    </div>
+
+    <div class="t-item reveal">
+      <div class="t-dot amber"></div>
+      <div class="t-header">
+        <div class="t-role">Operations NCO</div>
+        <div class="t-date">Oct 2017 – May 2021</div>
+      </div>
+      <div class="t-org">CDLS(W) — Canadian Defence Liaison Staff Washington</div>
+      <div class="t-location">📍 Washington, District of Columbia</div>
+      <div class="t-desc">Embedded with the Canadian military's liaison office at the US Department of Defense in Washington DC. Top Secret cleared. Managed personnel records, compliance, and administrative functions in an inter-allied, classified environment — the most senior and operationally sensitive posting of the career.</div>
+    </div>
+
+    <div class="t-item reveal">
+      <div class="t-dot"></div>
+      <div class="t-header">
+        <div class="t-role">HR Clerk / 2IC — Release Section</div>
+        <div class="t-date">Apr 2015 – Oct 2017</div>
+      </div>
+      <div class="t-org">CFB Halifax — Base Administration</div>
+      <div class="t-location">📍 Halifax, Nova Scotia</div>
+      <div class="t-desc">Second-in-Command of the Release Section, the specialised HR unit within Base Administration responsible for managing all member separations from the Canadian Armed Forces — medical releases, retirements, voluntary releases, and disciplinary cases. Required careful policy interpretation, empathetic case management, and precise documentation under significant regulatory scrutiny.</div>
+    </div>
+
+    <div class="t-item reveal">
+      <div class="t-dot"></div>
+      <div class="t-header">
+        <div class="t-role">HR Clerk</div>
+        <div class="t-date">Aug 2014 – Apr 2015</div>
+      </div>
+      <div class="t-org">HMCS Ville de Québec</div>
+      <div class="t-location">📍 Halifax, Nova Scotia</div>
+      <div class="t-desc">HR and administrative duties aboard the Halifax-class patrol frigate. Responsible for personnel records, pay administration, and compliance for ship's company.</div>
+    </div>
+
+    <div class="t-item reveal">
+      <div class="t-dot amber"></div>
+      <div class="t-header">
+        <div class="t-role">HR Clerk — Deployed</div>
+        <div class="t-date">Feb 2013 – Jul 2013</div>
+      </div>
+      <div class="t-org">TF Artemis (FFH1) — Operation Artemis</div>
+      <div class="t-location">📍 Bahrain / Arabian Sea</div>
+      <div class="t-desc">International operational deployment. Provided HR and administrative support to Task Force Artemis, the multinational counter-terrorism and counter-narcotics naval mission in the Arabian Sea. Operated in a secure, multi-national command environment. Awarded the General Campaign Star — South West Asia (GCS-SWA).</div>
+    </div>
+
+    <div class="t-item reveal">
+      <div class="t-dot"></div>
+      <div class="t-header">
+        <div class="t-role">HR Clerk</div>
+        <div class="t-date">Jul 2012 – Aug 2014</div>
+      </div>
+      <div class="t-org">HMCS Toronto / HMCS St. John's</div>
+      <div class="t-location">📍 Halifax, Nova Scotia</div>
+      <div class="t-desc">Sequential postings to two Halifax-class frigates of the Atlantic Fleet. Maintained personnel records, pay, and HR compliance aboard operational warships.</div>
+    </div>
+
+    <div class="t-item reveal">
+      <div class="t-dot"></div>
+      <div class="t-header">
+        <div class="t-role">HR Clerk</div>
+        <div class="t-date">Mar 2012 – Jul 2012</div>
+      </div>
+      <div class="t-org">CFB Halifax — Base Administration</div>
+      <div class="t-location">📍 Halifax, Nova Scotia</div>
+      <div class="t-desc">HR administration at the base level following re-enrolment through CFRC Halifax Det Moncton. Transition back into regular force employment before posting to the Atlantic Fleet.</div>
+    </div>
+
+    <div class="t-item reveal">
+      <div class="t-dot"></div>
+      <div class="t-header">
+        <div class="t-role">Supplemental Reserve — Civilian Development</div>
+        <div class="t-date">Jun 2007 – Mar 2012</div>
+      </div>
+      <div class="t-org">Canadian Armed Forces Supplemental Reserve</div>
+      <div class="t-location">📍 Canada</div>
+      <div class="t-desc">Period of non-active employment on the Supplemental Reserve. Pursued further university education and worked in the financial services sector, including earning the <strong style="color: var(--green);">Canadian Securities Course (CSC)</strong> — formal qualification in investment products and regulatory compliance. Maintained connection to the CAF and re-enrolled in 2012.</div>
+    </div>
+
+    <div class="t-item reveal">
+      <div class="t-dot amber"></div>
+      <div class="t-header">
+        <div class="t-role">HR Clerk — Deployed</div>
+        <div class="t-date">Sep 2006 – Mar 2007</div>
+      </div>
+      <div class="t-org">HMCS Ottawa — Operation Athena</div>
+      <div class="t-location">📍 Arabian Gulf</div>
+      <div class="t-desc">First operational deployment. Sailed with HMCS Ottawa to the Arabian Gulf in support of Operation Athena, Canada's contribution to the multinational coalition presence in the region. Provided HR and administrative support aboard an operational warship in an active theatre. Awarded the South West Asia Service Medal with Active Force bar.</div>
+    </div>
+
+    <div class="t-item reveal">
+      <div class="t-dot"></div>
+      <div class="t-header">
+        <div class="t-role">HR Clerk — Pacific Fleet</div>
+        <div class="t-date">2003 – 2007</div>
+      </div>
+      <div class="t-org">HMCS Ottawa · HMCS Malahat · CFB Esquimalt · CANFLTPAC HQ</div>
+      <div class="t-location">📍 Esquimalt, British Columbia</div>
+      <div class="t-desc">Initial career posting with the Pacific Fleet. Served at CANFLTPAC HQ and CFB Esquimalt, and was attached to HMCS Regina, and posted to HMCS Ottawa and HMCS Malahat — a reserve force Navy unit based on the Esquimalt dockyard. Developed foundational expertise in naval HR administration, payroll systems, and military compliance frameworks across shore and afloat environments.</div>
+    </div>
+
+    <div class="t-item reveal">
+      <div class="t-dot"></div>
+      <div class="t-header">
+        <div class="t-role">Basic Training / Initial Trades Training</div>
+        <div class="t-date">Dec 2002 – Jun 2003</div>
+      </div>
+      <div class="t-org">CFRC Gagetown · CFLRS St-Jean · CFSAL Borden</div>
+      <div class="t-location">📍 NB · QC · ON</div>
+      <div class="t-desc">Initial enrolment at CFRC Gagetown, NB. Completed Basic Military Qualification (BMQ) at Saint-Jean-sur-Richelieu, QC, and initial trades training at CFB Borden, ON, before joining the Pacific Fleet as an RMS Clerk.</div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── RANK HISTORY ── -->
+<div class="chart-divider"><span class="chart-divider-label">Rank Progression</span></div>
+
+<section>
+  <div class="section-label reveal">Promotions</div>
+  <div class="timeline">
+
+    <div class="t-item reveal">
+      <div class="t-dot amber"></div>
+      <div class="t-header">
+        <div class="t-role">Petty Officer Second Class (PO2)</div>
+        <div class="t-date">Jul 2019</div>
+      </div>
+      <div class="t-org">Final rank on retirement</div>
+      <div class="t-desc">Senior NCO rank in the Royal Canadian Navy. Led HR departments, mentored junior staff, and served as Operations NCO at a Top Secret-cleared inter-allied posting in Washington DC.</div>
+    </div>
+
+    <div class="t-item reveal">
+      <div class="t-dot"></div>
+      <div class="t-header">
+        <div class="t-role">Master Seaman (MS)</div>
+        <div class="t-date">Jul 2017</div>
+      </div>
+      <div class="t-org"></div>
+      <div class="t-desc">Promoted following completion of Primary Leadership Qualification and Junior Naval Environment Leadership Programme. Qualified as Force Evaluator and Instructional Techniques instructor.</div>
+    </div>
+
+    <div class="t-item reveal">
+      <div class="t-dot"></div>
+      <div class="t-header">
+        <div class="t-role">Leading Seaman (LS)</div>
+        <div class="t-date">Oct 2013</div>
+      </div>
+      <div class="t-org"></div>
+      <div class="t-desc">Promoted following operational deployment with TF Artemis and sustained performance in HR administrative roles across multiple Atlantic Fleet postings.</div>
+    </div>
+
+    <div class="t-item reveal">
+      <div class="t-dot"></div>
+      <div class="t-header">
+        <div class="t-role">Able Seaman (AB)</div>
+        <div class="t-date">Jul 2005</div>
+      </div>
+      <div class="t-org"></div>
+      <div class="t-desc">Substantive promotion following trades qualification and demonstrated performance with the Pacific Fleet.</div>
+    </div>
+
+    <div class="t-item reveal">
+      <div class="t-dot"></div>
+      <div class="t-header">
+        <div class="t-role">Ordinary Seaman (OS) — Enrolled</div>
+        <div class="t-date">Dec 2002</div>
+      </div>
+      <div class="t-org"></div>
+      <div class="t-desc">Initial enrolment rank. Began career as an RMS Clerk (Resource Management Services), the naval occupation responsible for HR, pay, and personnel records administration.</div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── HONOURS ── -->
+<div class="chart-divider"><span class="chart-divider-label">Honours &amp; Awards</span></div>
+
+<section>
+  <div class="section-label reveal">Decorations</div>
+  <div class="awards-grid">
+    <div class="award-card reveal">
+      <div class="award-icon">🎖️</div>
+      <div class="award-name">Canadian Decoration (CD)</div>
+      <div class="award-meta">Awarded for 12 years of honourable service in the Canadian Armed Forces</div>
+    </div>
+    <div class="award-card reveal">
+      <div class="award-icon">🏅</div>
+      <div class="award-name">South West Asia Service Medal</div>
+      <div class="award-meta">With Afghanistan (AF) bar — awarded for operational deployment to the Arabian Gulf aboard HMCS Ottawa, Op Athena (2006–2007)</div>
+    </div>
+    <div class="award-card reveal">
+      <div class="award-icon">⚓</div>
+      <div class="award-name">General Campaign Star — South West Asia (GCS-SWA)</div>
+      <div class="award-meta">Awarded for service in the Arabian Sea region during Operation Artemis, Task Force Artemis (2013)</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── GRC BRIDGE ── -->
+<div class="chart-divider"><span class="chart-divider-label">Why It Matters</span></div>
+
+<section>
+  <div class="section-label reveal">Military Experience → GRC</div>
+  <div class="grc-bridge reveal">
+    <h3>Twenty Years of Living GRC</h3>
+    <p>The military runs on policy frameworks. Every decision — from pay entitlements to disciplinary procedures to security clearance eligibility — is governed by documented regulations: the <strong>QR&Os (Queen's Regulations and Orders)</strong>, <strong>CFAOs (Canadian Forces Administrative Orders)</strong>, and <strong>DAODs (Defence Administrative Orders and Directives)</strong>. These are not reference documents you check occasionally. They are the operating system of military administration, consulted daily and applied with precision.</p>
+    <p>For twenty years, that was my work. Interpreting policy, applying it correctly under pressure, documenting outcomes, briefing leadership, and training junior staff to do the same. The frameworks change — QR&Os become ISO 27001, CFAOs become NIST RMF — but the discipline of working within structured compliance environments does not.</p>
+    <p>Add to that: <strong>secure data handling</strong> for hundreds of personnel under strict need-to-know principles, <strong>Top Secret clearance</strong> at an inter-allied posting, <strong>expenditure management</strong> accountability, and two operational deployments in which administrative functions had to remain reliable under stress. That's a GRC foundation most practitioners build over a career. I arrived with it.</p>
+  </div>
+</section>
+
+<footer>
+  ✦ &nbsp; GEOFFREY WEST &nbsp; · &nbsp; BRISBANE, QLD &nbsp; · &nbsp; 27°28'S 153°01'E &nbsp; · &nbsp; © 2025
+</footer>
+
+<script>
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach((e) => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      observer.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>
