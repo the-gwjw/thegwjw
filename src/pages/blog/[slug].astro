@@ -1,0 +1,750 @@
+---
+// src/pages/blog/[slug].astro
+import Layout from "../../layouts/Base.astro";
+import { getCollection, getEntry } from "emdash:content";
+import { PortableText } from "@portabletext/react";
+
+export async function getStaticPaths() {
+  const posts = await getCollection("posts", {
+    filter: { status: "published" },
+  });
+  return posts.map((post) => ({
+    params: { slug: post.slug },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { data } = post;
+---
+
+<Layout title={data.title} description={data.excerpt}>
+  <main class="article-root">
+
+    <div class="chart-divider chart-divider--top">
+      <span class="chart-divider-label">// Blog</span>
+    </div>
+
+    <article class="article-wrap">
+
+      <!-- Header -->
+      <header class="article-header">
+        <div class="post-meta">
+          {data.categories?.map((cat) => (
+            <span class="category">{cat.name}</span>
+          ))}
+          <time class="post-date" datetime={data.publishedAt}>
+            {new Date(data.publishedAt).toLocaleDateString("en-AU", {
+              year: "numeric", month: "long", day: "numeric",
+            })}
+          </time>
+          {data.readingTime && (
+            <span class="reading-time">{data.readingTime} min read</span>
+          )}
+        </div>
+
+        <h1 class="article-title">{data.title}</h1>
+
+        {data.excerpt && <p class="article-excerpt">{data.excerpt}</p>}
+
+        {data.author && (
+          <div class="author-row">
+            <div class="author-avatar">{data.author.name?.charAt(0)}</div>
+            <span class="author-name">{data.author.name}</span>
+          </div>
+        )}
+      </header>
+
+      <!-- Cover image -->
+      {data.coverImage && (
+        <div class="article-cover">
+          <img src={data.coverImage} alt={data.title} loading="eager" />
+        </div>
+      )}
+
+      <!-- Body -->
+      <div class="article-body">
+        <PortableText value={data.content} />
+      </div>
+
+      <!-- Tags -->
+      {data.tags?.length > 0 && (
+        <div class="article-tags">
+          {data.tags.map((tag) => (
+            <span class="tag">{tag.name}</span>
+          ))}
+        </div>
+      )}
+
+      <!-- Divider -->
+      <div class="article-divider">
+        <span class="chart-divider-label">// Support this work</span>
+      </div>
+
+      <!-- Lightning tip section -->
+      <section class="tip-section" aria-label="Tip this article with Lightning">
+        <div class="tip-section-inner">
+          <div class="tip-section-left">
+            <div class="tip-label">// lightning tip</div>
+            <p class="tip-copy">
+              Found this useful? Send a few sats — no account needed, instant settlement.
+            </p>
+            <div class="tip-actions">
+              <button
+                class="tip-btn"
+                data-x402-url={`/api/tip?post=${post.slug}&amount=100`}
+                data-post-title={data.title}
+                onclick="handleTip(this)"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                Send a tip
+              </button>
+              <div class="tip-presets">
+                <button class="tip-preset" data-x402-url={`/api/tip?post=${post.slug}&amount=21`} onclick="handleTip(this)">21 sats</button>
+                <button class="tip-preset" data-x402-url={`/api/tip?post=${post.slug}&amount=100`} onclick="handleTip(this)">100 sats</button>
+                <button class="tip-preset" data-x402-url={`/api/tip?post=${post.slug}&amount=500`} onclick="handleTip(this)">500 sats</button>
+                <button class="tip-preset" data-x402-url={`/api/tip?post=${post.slug}&amount=1000`} onclick="handleTip(this)">1000 sats</button>
+              </div>
+            </div>
+          </div>
+          <div class="tip-lightning-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </div>
+        </div>
+      </section>
+
+    </article>
+  </main>
+
+  <!-- x402 Lightning tip modal (same as listing page) -->
+  <div id="tip-modal" class="tip-modal" role="dialog" aria-modal="true" aria-labelledby="tip-modal-title" hidden>
+    <div class="tip-modal-inner">
+      <div class="tip-modal-header">
+        <span class="tip-modal-label">// lightning payment</span>
+        <button class="tip-modal-close" onclick="closeTipModal()" aria-label="Close">✕</button>
+      </div>
+      <p id="tip-modal-title" class="tip-modal-title"></p>
+      <div class="tip-invoice-wrap">
+        <div id="tip-qr" class="tip-qr"></div>
+        <code id="tip-invoice" class="tip-invoice"></code>
+      </div>
+      <div class="tip-modal-actions">
+        <button class="btn-copy" onclick="copyInvoice()">Copy invoice</button>
+        <a id="tip-open-wallet" class="btn-wallet" href="#" target="_blank">Open in wallet</a>
+      </div>
+      <p id="tip-status" class="tip-status" hidden></p>
+    </div>
+  </div>
+  <div id="tip-overlay" class="tip-overlay" onclick="closeTipModal()" hidden></div>
+</Layout>
+
+<style>
+  :root {
+    --bg:            #080d10;
+    --surface:       #0d1519;
+    --surface2:      #111c21;
+    --border:        rgba(100,180,160,0.12);
+    --border-bright: rgba(100,180,160,0.28);
+    --text:          #c8d8d0;
+    --muted:         #4a6560;
+    --green:         #48c9a0;
+    --green-dim:     #2a7a60;
+    --amber:         #c8a050;
+    --amber-dim:     #7a5f28;
+  }
+
+  .article-root {
+    min-height: 100vh;
+    background: var(--bg);
+  }
+
+  /* ── Divider ── */
+  .chart-divider--top {
+    position: relative;
+    z-index: 1;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 48px 48px 0;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .chart-divider--top::before,
+  .chart-divider--top::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--border-bright), transparent);
+  }
+
+  .chart-divider-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    color: var(--amber);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  /* ── Article wrap ── */
+  .article-wrap {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 48px 48px 80px;
+  }
+
+  /* ── Header ── */
+  .post-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  .category {
+    color: var(--amber);
+    font-weight: 500;
+    border: 1px solid var(--amber-dim);
+    border-radius: 3px;
+    padding: 2px 9px;
+  }
+
+  .post-date { color: var(--muted); }
+
+  .reading-time::before { content: '·'; margin-right: 8px; }
+
+  .article-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(1.75rem, 4vw, 2.75rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    color: #d8ede8;
+    margin: 0 0 16px;
+  }
+
+  .article-excerpt {
+    font-size: 1.05rem;
+    color: var(--muted);
+    line-height: 1.75;
+    margin: 0 0 24px;
+    border-left: 2px solid var(--green-dim);
+    padding-left: 16px;
+  }
+
+  .author-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 0;
+  }
+
+  .author-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(72,201,160,0.1);
+    border: 1px solid var(--green-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--green);
+    flex-shrink: 0;
+  }
+
+  .author-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text);
+  }
+
+  /* ── Cover image ── */
+  .article-cover {
+    margin: 32px 0;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    aspect-ratio: 16/9;
+    background: var(--surface2);
+  }
+
+  .article-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    opacity: 0.85;
+  }
+
+  /* ── Body prose ── */
+  .article-body {
+    font-size: 1rem;
+    line-height: 1.85;
+    color: var(--text);
+    margin: 32px 0;
+  }
+
+  .article-body :global(h2) {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #d8ede8;
+    margin: 2.5rem 0 0.75rem;
+    letter-spacing: -0.02em;
+  }
+
+  .article-body :global(h3) {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #d8ede8;
+    margin: 2rem 0 0.5rem;
+  }
+
+  .article-body :global(p) { margin: 0 0 1.25rem; }
+
+  .article-body :global(a) {
+    color: var(--green);
+    text-decoration: none;
+    border-bottom: 1px solid var(--green-dim);
+    transition: border-color 0.15s;
+  }
+
+  .article-body :global(a:hover) { border-color: var(--green); }
+
+  .article-body :global(strong) { color: #d8ede8; font-weight: 600; }
+
+  .article-body :global(code) {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82em;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1px 6px;
+    color: var(--amber);
+  }
+
+  .article-body :global(pre) {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 2px solid var(--green-dim);
+    border-radius: 6px;
+    padding: 1.25rem 1.5rem;
+    overflow-x: auto;
+    margin: 1.5rem 0;
+  }
+
+  .article-body :global(pre code) {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--text);
+    font-size: 0.85rem;
+  }
+
+  .article-body :global(blockquote) {
+    border-left: 2px solid var(--green-dim);
+    padding: 4px 0 4px 20px;
+    margin: 1.5rem 0;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  /* ── Tags ── */
+  .article-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 32px 0 0;
+  }
+
+  .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 3px 9px;
+    transition: color 0.15s, border-color 0.15s;
+  }
+
+  .tag:hover { color: var(--text); border-color: var(--border-bright); }
+
+  /* ── Article divider ── */
+  .article-divider {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 48px 0 32px;
+  }
+
+  .article-divider::before,
+  .article-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--border-bright), transparent);
+  }
+
+  /* ── Tip section ── */
+  .tip-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 2px solid var(--green-dim);
+    border-radius: 6px;
+    padding: 1.75rem 2rem;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s, border-left-color 0.2s;
+  }
+
+  .tip-section::before {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 100px; height: 100px;
+    background: radial-gradient(ellipse at top right, rgba(72,201,160,0.07), transparent 70%);
+    pointer-events: none;
+  }
+
+  .tip-section:hover {
+    border-color: var(--border-bright);
+    border-left-color: var(--green);
+  }
+
+  .tip-section-inner {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+  }
+
+  .tip-section-left { flex: 1; }
+
+  .tip-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 10px;
+  }
+
+  .tip-copy {
+    font-size: 0.9rem;
+    color: var(--muted);
+    line-height: 1.6;
+    margin: 0 0 18px;
+  }
+
+  .tip-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .tip-presets {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .tip-lightning-icon {
+    width: 56px;
+    height: 56px;
+    flex-shrink: 0;
+    color: var(--green-dim);
+    opacity: 0.5;
+  }
+
+  .tip-lightning-icon svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* ── Buttons (same as listing page) ── */
+  .tip-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: rgba(72,201,160,0.08);
+    color: var(--green);
+    border: 1px solid var(--green-dim);
+    border-radius: 4px;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, transform 0.15s;
+  }
+
+  .tip-btn:hover {
+    background: rgba(72,201,160,0.15);
+    border-color: var(--green);
+    transform: translateY(-1px);
+  }
+
+  .tip-preset {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 5px 12px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+  }
+
+  .tip-preset:hover {
+    color: var(--green);
+    border-color: var(--green-dim);
+  }
+
+  /* ── Modal (identical to listing page) ── */
+  .tip-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(8,13,16,0.75);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+  }
+
+  .tip-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 201;
+    width: min(440px, 92vw);
+    background: var(--surface);
+    border: 1px solid var(--border-bright);
+    border-left: 2px solid var(--green);
+    border-radius: 8px;
+    padding: 1.75rem;
+  }
+
+  .tip-modal[hidden],
+  .tip-overlay[hidden] { display: none; }
+
+  .tip-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+
+  .tip-modal-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--amber);
+  }
+
+  .tip-modal-close {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    transition: color 0.15s;
+  }
+
+  .tip-modal-close:hover { color: var(--text); }
+
+  .tip-modal-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #d8ede8;
+    margin-bottom: 20px;
+    line-height: 1.35;
+  }
+
+  .tip-invoice-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+
+  .tip-qr {
+    width: 200px;
+    height: 200px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .tip-invoice {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    word-break: break-all;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px 12px;
+    width: 100%;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .tip-modal-actions {
+    display: flex;
+    gap: 10px;
+  }
+
+  .btn-copy {
+    flex: 1;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: rgba(72,201,160,0.08);
+    color: var(--green);
+    border: 1px solid var(--green-dim);
+    border-radius: 4px;
+    padding: 10px;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+  }
+
+  .btn-copy:hover {
+    background: rgba(72,201,160,0.15);
+    border-color: var(--green);
+  }
+
+  .btn-wallet {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: var(--green);
+    color: var(--bg);
+    border: 1px solid var(--green);
+    border-radius: 4px;
+    padding: 10px;
+    text-decoration: none;
+    transition: opacity 0.2s;
+  }
+
+  .btn-wallet:hover { opacity: 0.85; }
+
+  .tip-status {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    text-align: center;
+    margin-top: 14px;
+    color: var(--green);
+  }
+
+  .tip-status[hidden] { display: none; }
+
+  /* ── Responsive ── */
+  @media (max-width: 680px) {
+    .article-wrap { padding: 32px 20px 56px; }
+    .chart-divider--top { padding: 32px 20px 0; }
+    .tip-section-inner { flex-direction: column; gap: 1rem; }
+    .tip-lightning-icon { display: none; }
+  }
+</style>
+
+<script>
+  async function handleTip(btn) {
+    const url = btn.dataset.x402Url;
+    const title = btn.dataset.postTitle
+      || btn.closest('[data-post-title]')?.dataset.postTitle
+      || document.querySelector('.article-title')?.textContent
+      || 'this post';
+
+    openTipModal(title);
+
+    try {
+      const res = await fetch(url, { method: 'POST' });
+      const data = await res.json();
+      const invoice = data.invoice || data.paymentRequest || data.pr;
+
+      if (invoice) {
+        renderInvoice(invoice, title);
+      } else {
+        showStatus('Could not generate invoice — try again shortly.');
+      }
+    } catch {
+      showStatus('Network error — check your connection.');
+    }
+  }
+
+  function renderInvoice(invoice, title) {
+    document.getElementById('tip-modal-title').textContent = `Tip for: ${title}`;
+    document.getElementById('tip-invoice').textContent = invoice;
+    document.getElementById('tip-open-wallet').href = `lightning:${invoice}`;
+
+    const qrEl = document.getElementById('tip-qr');
+    qrEl.innerHTML = '';
+    if (typeof QRCode !== 'undefined') {
+      new QRCode(qrEl, {
+        text: invoice.toUpperCase(),
+        width: 192, height: 192,
+        colorDark: '#48c9a0',
+        colorLight: '#0d1519',
+        correctLevel: QRCode.CorrectLevel.M,
+      });
+    } else {
+      qrEl.innerHTML = '<span style="font-family:JetBrains Mono,monospace;font-size:0.65rem;color:#4a6560;text-align:center;padding:16px;">scan invoice above<br>in your wallet</span>';
+    }
+  }
+
+  function openTipModal(title) {
+    document.getElementById('tip-modal-title').textContent = `Tip for: ${title}`;
+    document.getElementById('tip-invoice').textContent = '— generating invoice…';
+    document.getElementById('tip-status').hidden = true;
+    document.getElementById('tip-modal').hidden = false;
+    document.getElementById('tip-overlay').hidden = false;
+  }
+
+  function closeTipModal() {
+    document.getElementById('tip-modal').hidden = true;
+    document.getElementById('tip-overlay').hidden = true;
+  }
+
+  function copyInvoice() {
+    const inv = document.getElementById('tip-invoice').textContent;
+    navigator.clipboard.writeText(inv).then(() => showStatus('// invoice copied to clipboard'));
+  }
+
+  function showStatus(msg) {
+    const el = document.getElementById('tip-status');
+    el.textContent = msg;
+    el.hidden = false;
+  }
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" async></script>
